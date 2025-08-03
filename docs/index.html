@@ -2,72 +2,45 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>RPG Bot — Создание героя</title>
+  <title>RPG Bot — Приветствие</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; padding: 1em; max-width: 400px; margin:auto; }
-    h2 { margin-top:1.5em; font-size:1.2em; }
-    label { display:block; margin-top:0.5em; }
-    input, select, button { width:100%; padding:0.5em; margin-top:0.5em; font-size:1rem; }
-    #status { margin-top:1em; color:green; white-space: pre-line; }
+    body {
+      font-family: sans-serif;
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <h1>Создание героя</h1>
-
-  <h2>Шаг 1: Ник</h2>
-  <label><input id="nick" type="text" placeholder="Введите ник" /></label>
-
-  <h2>Шаг 2: Пол</h2>
-  <label><select id="gender">
-    <option value="">— выберите —</option>
-    <option value="Мужской">Мужской</option>
-    <option value="Женский">Женский</option>
-  </select></label>
-
-  <h2>Шаг 3: Раса</h2>
-  <label><select id="race">
-    <option value="">— выберите —</option>
-    <option value="Человек">Человек</option>
-    <option value="Эльф">Эльф</option>
-    <option value="Орк">Орк</option>
-    <option value="Гном">Гном</option>
-  </select></label>
-
-  <button id="btn-send">Отправить</button>
-  <div id="status"></div>
+  <h1 id="greeting">Привет!</h1>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const status   = document.getElementById('status');
-      const nickEl   = document.getElementById('nick');
-      const genderEl = document.getElementById('gender');
-      const raceEl   = document.getElementById('race');
-      const btn      = document.getElementById('btn-send');
+      const greetingEl = document.getElementById('greeting');
 
-      const tg = window.Telegram?.WebApp;
-      if (!tg) {
-        status.textContent = '❌ WebApp SDK не найден. Откройте форму через кнопку в Telegram.';
-        return;
+      // Если WebApp SDK загружен — покажем имя из Telegram
+      if (window.Telegram?.WebApp) {
+        const tg = Telegram.WebApp;
+        tg.expand();
+
+        // Берём first_name из initDataUnsafe (или initData, если нужна проверка подписи)
+        const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+        const name = user && user.first_name ? user.first_name : 'Герой';
+        greetingEl.textContent = `Привет, ${name}!`;
+      } else {
+        // Без SDK — просто статический текст
+        greetingEl.textContent = 'Привет, Валентин!';
       }
-      status.textContent = '✅ WebApp SDK загружен. Заполните все поля и нажмите «Отправить».';
-
-      tg.expand();
-
-      btn.addEventListener('click', () => {
-        const nick   = nickEl.value.trim();
-        const gender = genderEl.value;
-        const race   = raceEl.value;
-        if (!nick || !gender || !race) {
-          alert('Пожалуйста, заполните все поля.');
-          return;
-        }
-        const payload = { nick, gender, race };
-        status.textContent += '\n→ Отправляем: ' + JSON.stringify(payload);
-        tg.sendData(JSON.stringify(payload));
-        setTimeout(() => tg.close(), 200);
-      });
     });
   </script>
 </body>
