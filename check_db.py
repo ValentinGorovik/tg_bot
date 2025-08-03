@@ -1,22 +1,12 @@
 import sqlite3
 
-DB = "heroes.db"
-
 def show_all():
-    conn = sqlite3.connect(DB)
-    cur  = conn.cursor()
-    cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = cur.fetchall()
-    print("Таблицы:", tables)
-    print("\nДанные в heroes:")
-    cur.execute("SELECT id, nick, gender, race, created_at FROM heroes;")
+    conn = sqlite3.connect("heroes.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM heroes;")
     rows = cur.fetchall()
-    if not rows:
-        print("  (пусто)")
-    else:
-        for row in rows:
-            print(" ", row)
+    print("heroes:", rows or "(пусто)")
     conn.close()
 
-if __name__ == "__main__":
+if __name__=="__main__":
     show_all()

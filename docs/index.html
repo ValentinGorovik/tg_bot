@@ -40,32 +40,41 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', ()=>{
-      const status = document.getElementById('status');
-      const nickEl = document.getElementById('nick');
+      const status   = document.getElementById('status');
+      const nickEl   = document.getElementById('nick');
       const genderEl = document.getElementById('gender');
-      const raceEl = document.getElementById('race');
-      const btn = document.getElementById('btn-send');
+      const raceEl   = document.getElementById('race');
+      const btn      = document.getElementById('btn-send');
 
+      const BOT_USERNAME = "bestwarrior_bot"; // <-- ваш @User без @
       const tg = window.Telegram?.WebApp;
-      if(!tg){
+
+      if (!tg) {
         status.textContent = '❌ Откройте форму через кнопку в Telegram.';
-        return;
+      } else {
+        status.textContent = '✅ WebApp SDK загружен. Заполните форму и нажмите «Отправить».';
+        tg.expand();
       }
-      status.textContent = '✅ WebApp SDK загружен. Заполните форму и жмите «Отправить».';
-      tg.expand();
 
       btn.addEventListener('click', ()=>{
-        const nick = nickEl.value.trim();
+        const nick   = nickEl.value.trim();
         const gender = genderEl.value;
-        const race = raceEl.value;
-        if(!nick||!gender||!race){
+        const race   = raceEl.value;
+        if (!nick || !gender || !race) {
           alert('Пожалуйста, заполните все поля.');
           return;
         }
         const payload = {nick,gender,race};
-        status.textContent += '\n→ Отправляем: '+JSON.stringify(payload);
-        tg.sendData(JSON.stringify(payload));
-        setTimeout(()=>tg.close(),200);
+        status.textContent += '\n→ Payload: '+JSON.stringify(payload);
+
+        if (tg && tg.sendData) {
+          tg.sendData(JSON.stringify(payload));
+          setTimeout(()=>tg.close(),200);
+        } else {
+          // fallback: откроем чат с ботом и передадим JSON в /start
+          const param = encodeURIComponent(JSON.stringify(payload));
+          window.location.href = `https://t.me/${BOT_USERNAME}?start=${param}`;
+        }
       });
     });
   </script>
