@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>RPG Bot — Создание героя</title>
+  <title>Создание героя</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <style>
-    body { font-family:sans-serif; padding:1em; max-width:400px; margin:auto; }
+    body { font-family: sans-serif; padding:1em; max-width:400px; margin:auto; }
     h2 { margin-top:1.5em; font-size:1.2em; }
     label { display:block; margin-top:0.5em; }
     input, select, button { width:100%; padding:0.5em; margin-top:0.5em; font-size:1rem; }
@@ -14,17 +14,14 @@
 </head>
 <body>
   <h1>Создание героя</h1>
-
   <h2>Шаг 1: Ник</h2>
   <label><input id="nick" type="text" placeholder="Введите ник"></label>
-
   <h2>Шаг 2: Пол</h2>
   <label><select id="gender">
     <option value="">— выберите —</option>
     <option value="Мужской">Мужской</option>
     <option value="Женский">Женский</option>
   </select></label>
-
   <h2>Шаг 3: Раса</h2>
   <label><select id="race">
     <option value="">— выберите —</option>
@@ -40,41 +37,31 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', ()=>{
-      const status   = document.getElementById('status');
-      const nickEl   = document.getElementById('nick');
-      const genderEl = document.getElementById('gender');
-      const raceEl   = document.getElementById('race');
-      const btn      = document.getElementById('btn-send');
-
-      const BOT_USERNAME = "bestwarrior_bot"; // <-- ваш @User без @
+      const status = document.getElementById('status'),
+            nick   = document.getElementById('nick'),
+            gender = document.getElementById('gender'),
+            race   = document.getElementById('race'),
+            btn    = document.getElementById('btn-send');
       const tg = window.Telegram?.WebApp;
-
-      if (!tg) {
-        status.textContent = '❌ Откройте форму через кнопку в Telegram.';
-      } else {
-        status.textContent = '✅ WebApp SDK загружен. Заполните форму и нажмите «Отправить».';
-        tg.expand();
+      if(!tg){
+        status.textContent = '❌ Откройте форму из Telegram-клиента.';
+        return;
       }
+      status.textContent = '✅ SDK загружен. Заполните поля и жмите «Отправить».';
+      tg.expand();
 
       btn.addEventListener('click', ()=>{
-        const nick   = nickEl.value.trim();
-        const gender = genderEl.value;
-        const race   = raceEl.value;
-        if (!nick || !gender || !race) {
-          alert('Пожалуйста, заполните все поля.');
-          return;
+        const data = {
+          nick:   nick.value.trim(),
+          gender: gender.value,
+          race:   race.value
+        };
+        if(!data.nick||!data.gender||!data.race){
+          return alert('Заполните все поля.');
         }
-        const payload = {nick,gender,race};
-        status.textContent += '\n→ Payload: '+JSON.stringify(payload);
-
-        if (tg && tg.sendData) {
-          tg.sendData(JSON.stringify(payload));
-          setTimeout(()=>tg.close(),200);
-        } else {
-          // fallback: откроем чат с ботом и передадим JSON в /start
-          const param = encodeURIComponent(JSON.stringify(payload));
-          window.location.href = `https://t.me/${BOT_USERNAME}?start=${param}`;
-        }
+        status.textContent += '\n→ отправляем: '+JSON.stringify(data);
+        tg.sendData(JSON.stringify(data));
+        setTimeout(()=>tg.close(),200);
       });
     });
   </script>
