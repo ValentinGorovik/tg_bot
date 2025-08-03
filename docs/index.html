@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>RPG Bot — Шаг 1: Ник</title>
+</head>
+<body>
+  <h1>Создание героя: Шаг 1</h1>
+  <form id="step1-form">
+    <label>Ник: <input id="nickname" name="nickname" required></label>
+    <button type="submit">Далее →</button>
+  </form>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    document
+      .getElementById('step1-form')
+      .addEventListener('submit', e => {
+        e.preventDefault();
+        const nick = e.target.nickname.value.trim();
+        if (!nick) return alert("Введите ник!");
+        tg.sendData(JSON.stringify({ step: 1, nick }));
+      });
+  </script>
+</body>
+</html>
