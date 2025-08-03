@@ -1,5 +1,4 @@
 import sqlite3
-DB = "heroes.db"
-c  = sqlite3.connect(DB).cursor()
+c=sqlite3.connect("heroes.db").cursor()
 c.execute("SELECT * FROM heroes")
-print("heroes:", c.fetchall() or "(пусто)")
+print("heroes:", c.fetchall())

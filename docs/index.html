@@ -3,67 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <title>Создание героя</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body { font-family: sans-serif; padding:1em; max-width:400px; margin:auto; }
-    h2 { margin-top:1.5em; font-size:1.2em; }
-    label { display:block; margin-top:0.5em; }
-    input, select, button { width:100%; padding:0.5em; margin-top:0.5em; font-size:1rem; }
-    #status { margin-top:1em; color:green; white-space:pre-line; }
+    body{font-family:sans-serif;padding:1em;max-width:400px;margin:auto;}
+    input,select,button{width:100%;padding:0.5em;margin-top:0.5em;font-size:1rem;}
+    #status{margin-top:1em;color:green;white-space:pre-line;}
   </style>
 </head>
 <body>
   <h1>Создание героя</h1>
-  <h2>Шаг 1: Ник</h2>
-  <label><input id="nick" type="text" placeholder="Введите ник"></label>
-  <h2>Шаг 2: Пол</h2>
-  <label><select id="gender">
-    <option value="">— выберите —</option>
-    <option value="Мужской">Мужской</option>
-    <option value="Женский">Женский</option>
-  </select></label>
-  <h2>Шаг 3: Раса</h2>
-  <label><select id="race">
-    <option value="">— выберите —</option>
-    <option value="Человек">Человек</option>
-    <option value="Эльф">Эльф</option>
-    <option value="Орк">Орк</option>
-    <option value="Гном">Гном</option>
-  </select></label>
-
-  <button id="btn-send">Отправить</button>
+  <label>Ник:<input id="nick" type="text" placeholder="Введите ник"></label>
+  <label>Пол:
+    <select id="gender">
+      <option value="">—</option>
+      <option>Мужской</option>
+      <option>Женский</option>
+    </select>
+  </label>
+  <label>Раса:
+    <select id="race">
+      <option value="">—</option>
+      <option>Человек</option>
+      <option>Эльф</option>
+      <option>Орк</option>
+      <option>Гном</option>
+    </select>
+  </label>
+  <button id="send">Отправить</button>
   <div id="status"></div>
-
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const status = document.getElementById('status'),
-            nick   = document.getElementById('nick'),
-            gender = document.getElementById('gender'),
-            race   = document.getElementById('race'),
-            btn    = document.getElementById('btn-send');
-      const tg = window.Telegram?.WebApp;
-      if(!tg){
-        status.textContent = '❌ Откройте форму из Telegram-клиента.';
-        return;
-      }
-      status.textContent = '✅ SDK загружен. Заполните поля и жмите «Отправить».';
-      tg.expand();
+    const tg = window.Telegram?.WebApp;
+    const status = document.getElementById('status');
+    if (!tg) {
+      status.innerText = "❌ Откройте из Telegram";
+      throw "";
+    }
+    tg.expand();
+    status.innerText = "✅ WebApp SDK загружен";
 
-      btn.addEventListener('click', ()=>{
-        const data = {
-          nick:   nick.value.trim(),
-          gender: gender.value,
-          race:   race.value
-        };
-        if(!data.nick||!data.gender||!data.race){
-          return alert('Заполните все поля.');
-        }
-        status.textContent += '\n→ отправляем: '+JSON.stringify(data);
-        tg.sendData(JSON.stringify(data));
-        setTimeout(()=>tg.close(),200);
-      });
-    });
+    document.getElementById('send').onclick = () => {
+      const payload = {
+        nick:   document.getElementById('nick').value,
+        gender: document.getElementById('gender').value,
+        race:   document.getElementById('race').value
+      };
+      status.innerText += "\n→ отправляем: " + JSON.stringify(payload);
+      tg.sendData(JSON.stringify(payload));
+      setTimeout(()=>tg.close(),200);
+    };
   </script>
 </body>
 </html>
