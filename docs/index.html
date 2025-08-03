@@ -3,54 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <title>Создание героя</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <style>
-    body{font-family:sans-serif;padding:1em;max-width:400px;margin:auto;}
-    input,select,button{width:100%;padding:0.5em;margin-top:0.5em;font-size:1rem;}
-    #status{margin-top:1em;color:green;white-space:pre-line;}
+    body { font-family:sans-serif; padding:1em; max-width:400px; margin:auto; }
+    label, input, select, button { display:block; width:100%; margin-top:0.5em; font-size:1rem; }
+    #status { margin-top:1em; color:green; white-space:pre-line; }
   </style>
 </head>
 <body>
   <h1>Создание героя</h1>
-  <label>Ник:<input id="nick" type="text" placeholder="Введите ник"></label>
-  <label>Пол:
-    <select id="gender">
-      <option value="">—</option>
-      <option>Мужской</option>
-      <option>Женский</option>
-    </select>
-  </label>
-  <label>Раса:
-    <select id="race">
-      <option value="">—</option>
-      <option>Человек</option>
-      <option>Эльф</option>
-      <option>Орк</option>
-      <option>Гном</option>
-    </select>
-  </label>
+
+  <label>Ник:    <input id="nick"   placeholder="Введите ник"></label>
+  <label>Пол:    <select id="gender">
+                <option value="">—</option>
+                <option>Мужской</option>
+                <option>Женский</option>
+              </select></label>
+  <label>Раса:   <select id="race">
+                <option value="">—</option>
+                <option>Человек</option>
+                <option>Эльф</option>
+                <option>Орк</option>
+                <option>Гном</option>
+              </select></label>
+
   <button id="send">Отправить</button>
-  <div id="status"></div>
+  <div id="status">✅ WebApp готов.</div>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    const tg = window.Telegram?.WebApp;
-    const status = document.getElementById('status');
-    if (!tg) {
-      status.innerText = "❌ Откройте из Telegram";
-      throw "";
-    }
+    const tg      = window.Telegram.WebApp;
+    const status  = document.getElementById('status');
+    const botName = 'bestwarrior_bot'; // ваш @bot_username без @
+
+    // разворачиваем форму на весь экран 
     tg.expand();
-    status.innerText = "✅ WebApp SDK загружен";
 
     document.getElementById('send').onclick = () => {
-      const payload = {
-        nick:   document.getElementById('nick').value,
-        gender: document.getElementById('gender').value,
-        race:   document.getElementById('race').value
-      };
-      status.innerText += "\n→ отправляем: " + JSON.stringify(payload);
-      tg.sendData(JSON.stringify(payload));
-      setTimeout(()=>tg.close(),200);
+      const nick   = document.getElementById('nick').value.trim();
+      const gender = document.getElementById('gender').value;
+      const race   = document.getElementById('race').value;
+
+      if (!nick || !gender || !race) {
+        return alert('Заполните все поля!');
+      }
+
+      const payload = JSON.stringify({nick, gender, race});
+      status.textContent = '→ отправляем через WebApp…';
+
+      // 1) пробуем WebApp.sendData
+      try {
+        tg.sendData(payload);
+        status.textContent = '→ WebApp.sendData вызван';
+      } catch (e) {
+        console.warn('sendData failed', e);
+        status.textContent = '→ sendData упал, пробуем deep-link…';
+      }
+
+      // 2) fallback: открываем deep-link внутри Telegram
+      const link = `https://t.me/${botName}?start=${encodeURIComponent(payload)}`;
+      tg.openLink(link);
+      status.textContent += '\n→ tg.openLink → бот получит /start';
     };
   </script>
 </body>

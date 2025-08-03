@@ -1,86 +1,78 @@
-import os
-import json
-import sqlite3
+import os, json, sqlite3, asyncio, logging
 from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher, types, executor
+from aiogram import Bot, Dispatcher
+from aiogram.filters import Command
+from aiogram.types import Message
 
+# — Логирование
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# — Токен и БД
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-bot       = Bot(token=BOT_TOKEN)
-dp        = Dispatcher(bot)
 DB        = "heroes.db"
 
 def init_db():
-    conn = sqlite3.connect(DB)
-    cur  = conn.cursor()
+    con = sqlite3.connect(DB)
+    cur = con.cursor()
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS heroes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nick TEXT,
-            gender TEXT,
-            race TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
+      CREATE TABLE IF NOT EXISTS heroes (
+        id INTEGER PRIMARY KEY,
+        nick TEXT NOT NULL,
+        gender TEXT NOT NULL,
+        race TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
     """)
-    conn.commit()
-    conn.close()
+    con.commit()
+    con.close()
+    logger.info("✅ DB ready")
 
-def save_hero(data: dict):
-    conn = sqlite3.connect(DB)
-    cur  = conn.cursor()
-    cur.execute(
-        "INSERT INTO heroes (nick, gender, race) VALUES (?, ?, ?)",
-        (data.get('nick'), data.get('gender'), data.get('race'))
-    )
-    conn.commit()
-    conn.close()
-    print("💾 Hero saved to DB:", data)
+# — /start принимает аргумент deep-link
+async def cmd_start(message: Message):
+    args = message.get_args()
+    if args:
+        try:
+            data = json.loads(args)
+            logger.info("💾 Received via deep-link: %s", data)
+            con = sqlite3.connect(DB)
+            con.execute(
+                "INSERT INTO heroes (nick, gender, race) VALUES (?, ?, ?)",
+                (data["nick"], data["gender"], data["race"])
+            )
+            con.commit()
+            con.close()
+            await message.answer(
+              f"✅ Сохранено:\n"
+              f"Ник: {data['nick']}\n"
+              f"Пол: {data['gender']}\n"
+              f"Раса: {data['race']}"
+            )
+            return
+        except Exception as e:
+            logger.error("Deep-link error: %s", e)
+    await message.answer("👋 Привет! Напишите /create")
 
-# Отладочный хендлер, который ловит ВСЁ
-@dp.message_handler(content_types=types.ContentType.ANY)
-async def debug_all(message: types.Message):
-    print("\n=== GOT MESSAGE ===")
-    print("type:", message.content_type)
-    print("text:", message.text)
-    print("web_app_data:", getattr(message, "web_app_data", None))
-    print("full object:", message)
-    # не отвечаем тут — просто лог
-
-@dp.message_handler(commands=['start'])
-async def cmd_start(message: types.Message):
-    await message.answer("👋 Привет! Отправь /create, чтобы создать героя.")
-
-@dp.message_handler(commands=['create'])
-async def cmd_create(message: types.Message):
-    print("🔹 /create received")
-    webapp_url = "https://valentingorovik.github.io/tg_bot/index.html"
-    kb = types.InlineKeyboardMarkup()
-    kb.add(types.InlineKeyboardButton(
+# — /create шлёт кнопку
+async def cmd_create(message: Message):
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+    kb = InlineKeyboardMarkup(inline_keyboard=[[
+      InlineKeyboardButton(
         text="🚀 Создать героя",
-        web_app=types.WebAppInfo(url=webapp_url)
-    ))
-    await message.answer("Нажми кнопку, чтобы открыть форму:", reply_markup=kb)
+        web_app=WebAppInfo(url="https://valentingorovik.github.io/tg_bot/index.html")
+      )
+    ]])
+    await message.answer("Нажмите кнопку ниже:", reply_markup=kb)
 
-# Специально на строку 'web_app_data'
-@dp.message_handler(content_types=['web_app_data'])
-async def webapp_handler(message: types.Message):
-    print("🔥 web_app_data handler called!")
-    raw = message.web_app_data.data
-    print("📨 raw data string:", raw)
-    try:
-        data = json.loads(raw)
-    except Exception as e:
-        print("❌ JSON parse error:", e)
-        return await message.answer("❗ Неверный формат данных.")
-    print("✅ Parsed payload:", data)
-
-    # Сохраняем и отвечаем
-    save_hero(data)
-    await message.answer(f"✅ Герой сохранён: {data}")
-
-if __name__ == '__main__':
-    print("🗄  Инициализируем базу…")
+async def main():
     init_db()
-    print("🚀 Запускаю бота…")
-    # НЕ пропускаем никакие новые обновления
-    executor.start_polling(dp, skip_updates=False)
+    bot = Bot(BOT_TOKEN)
+    dp  = Dispatcher()
+    dp.message.register(cmd_start,  Command("start"))
+    dp.message.register(cmd_create, Command("create"))
+    logger.info("🚀 Polling…")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
